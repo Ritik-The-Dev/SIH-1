@@ -2,6 +2,8 @@ import User from "../models/User.js";
 import multer from "multer";
 import { CloudinaryStorage } from "multer-storage-cloudinary";
 import cloudinary from "../config/cloudinary.js";
+import mammoth from "mammoth";
+import { extractTextFromPdfBuffer } from "../utils/textUtils.js";
 
 // ✅ Setup Cloudinary Storage for resumess
 const storage = new CloudinaryStorage({
@@ -63,14 +65,10 @@ export const updateProfile = async (req, res) => {
   }
 };
 
-import axios from "axios";
-import pdfParse from "pdf-parse";
-import mammoth from "mammoth";
-
 /**
  * @desc   Extract text from resume and parse details
  * @route  POST /api/resume/extract
- * @body   { resumeUrl: "https://cloudinary.com/.../resume.pdf" }
+ * @body   { file: uploaded resume }
  */
 export const extractResumeText = async (req, res) => {
   try {
@@ -84,8 +82,7 @@ export const extractResumeText = async (req, res) => {
 
     // ✅ Detect format (PDF or DOCX)
     if (originalName.endsWith(".pdf")) {
-      const data = await pdfParse(buffer);
-      text = data.text;
+      text = await extractTextFromPdfBuffer(buffer);
     } else if (originalName.endsWith(".docx")) {
       const data = await mammoth.extractRawText({ buffer });
       text = data.value;
@@ -95,17 +92,33 @@ export const extractResumeText = async (req, res) => {
 
     text = text.replace(/\s+/g, " ").trim();
 
-    // ✅ Extract details
+    // ✅ Extract basic details
     const nameMatch = text.match(/([A-Z][a-z]+(?:\s[A-Z][a-z]+){0,2})/);
-    const emailMatch = text.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-z]{2,}/);
+    const emailMatch = text.match(
+      /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-z]{2,}/
+    );
     const phoneMatch = text.match(/(\+?\d{1,3}[-\s]?)?\d{10}/);
 
     const skillsList = [
-      "JavaScript","React","Node.js","Python","Java","C++","SQL",
-      "Machine Learning","Data Science","AWS","Docker","Kubernetes",
-      "HTML","CSS","MongoDB","Express","Figma"
+      "JavaScript",
+      "React",
+      "Node.js",
+      "Python",
+      "Java",
+      "C++",
+      "SQL",
+      "Machine Learning",
+      "Data Science",
+      "AWS",
+      "Docker",
+      "Kubernetes",
+      "HTML",
+      "CSS",
+      "MongoDB",
+      "Express",
+      "Figma",
     ];
-    const skills = skillsList.filter(skill =>
+    const skills = skillsList.filter((skill) =>
       text.toLowerCase().includes(skill.toLowerCase())
     );
 
@@ -126,7 +139,7 @@ export const extractResumeText = async (req, res) => {
         education,
         experience,
         rawText: text,
-      }
+      },
     });
   } catch (err) {
     console.error("Resume extraction error:", err.message);

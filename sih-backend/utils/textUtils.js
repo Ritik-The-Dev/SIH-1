@@ -1,22 +1,43 @@
 // utils/textUtils.js
-import fs from "fs";
-import pdfParse from "pdf-parse";
+import PDFParser from "pdf2json";
 import _ from "lodash";
 
 /**
- * Extract text from an uploaded resume file (supports PDF; for other formats you can add parsers)
+ * Extract text from an uploaded PDF resume buffer using pdf2json
  * @param {Buffer} fileBuffer
  * @returns {Promise<string>}
  */
 export async function extractTextFromPdfBuffer(fileBuffer) {
   if (!fileBuffer) return "";
-  try {
-    const data = await pdfParse(fileBuffer);
-    return data.text || "";
-  } catch (err) {
-    console.error("pdf parse error:", err);
-    return "";
-  }
+
+  return new Promise((resolve, reject) => {
+    try {
+      const pdfParser = new PDFParser();
+
+      pdfParser.on("pdfParser_dataError", errData => {
+        console.error("pdf2json parse error:", errData.parserError);
+        resolve(""); // return empty string on error
+      });
+
+      pdfParser.on("pdfParser_dataReady", pdfData => {
+        // Extract text from all pages
+        const rawText = pdfData.formImage.Pages
+          .map(page =>
+            page.Texts
+              .map(t => decodeURIComponent(t.R.map(r => r.T).join("")))
+              .join(" ")
+          )
+          .join(" ");
+        resolve(rawText);
+      });
+
+      // Load buffer
+      pdfParser.parseBuffer(fileBuffer);
+    } catch (err) {
+      console.error("pdf2json error:", err);
+      resolve("");
+    }
+  });
 }
 
 /**
@@ -37,19 +58,29 @@ export function buildProfileText(prefs = {}) {
     parts.push(prefs.skills.join(" "));
 
   if (Array.isArray(prefs.education) && prefs.education.length)
-    parts.push(prefs.education.map(e => `${e.degree || ""} ${e.school || ""} ${e.year || ""}`).join(" "));
+    parts.push(
+      prefs.education
+        .map(e => `${e.degree || ""} ${e.school || ""} ${e.year || ""}`)
+        .join(" ")
+    );
 
   if (Array.isArray(prefs.experience) && prefs.experience.length)
-    parts.push(prefs.experience.map(x => `${x.role || ""} ${x.company || ""} ${x.description || ""}`).join(" "));
+    parts.push(
+      prefs.experience
+        .map(x => `${x.role || ""} ${x.company || ""} ${x.description || ""}`)
+        .join(" ")
+    );
 
   if (Array.isArray(prefs.projects) && prefs.projects.length)
-    parts.push(prefs.projects.map(p => `${p.title || ""} ${p.tech || ""} ${p.description || ""}`).join(" "));
+    parts.push(
+      prefs.projects
+        .map(p => `${p.title || ""} ${p.tech || ""} ${p.description || ""}`)
+        .join(" ")
+    );
 
   if (prefs.resumeText) parts.push(prefs.resumeText);
-
   if (prefs.freeText) parts.push(prefs.freeText);
 
   const combined = parts.join(" ").replace(/\s+/g, " ").toLowerCase();
-  // minimal cleaning
   return _.trim(combined);
 }

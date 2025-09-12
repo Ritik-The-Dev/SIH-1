@@ -1,7 +1,7 @@
 import User from "../models/User.js";
-import JobPosting from "../models/Application.js";
+import JobPosting from "../models/Jobs.js";
 import { sendEmail } from "../utils/sendEmail.js";
-import { recommendWithTfIdf } from "../services/recommender.js";
+import { recommendWithTfIdf } from "../utils/recommender.js";
 
 /**
  * @desc   Get top job recommendations using TF-IDF + cosine similarity
