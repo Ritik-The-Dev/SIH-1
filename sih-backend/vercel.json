@@ -2,7 +2,8 @@
   "version": 2,
   "name": "native-server",
   "builds": [
-    { "src": "server.js", "use": "@vercel/node" }
+    { "src": "server.js", "use": "@vercel/node" },
+    { "src": "builds/sih/**/*", "use": "@vercel/static" }
   ],
   "routes": [
     {
