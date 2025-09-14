@@ -13,7 +13,7 @@ const app = express();
 // ✅ Allow frontend origin + credentials
 app.use(
   cors({
-    origin: "http://localhost:5173", // your frontend URL
+    origin: ["http://localhost:5173/", "https://sih-sapphire.vercel.app/"], // your frontend URL
     credentials: true,               // allow cookies, auth headers
   })
 );
