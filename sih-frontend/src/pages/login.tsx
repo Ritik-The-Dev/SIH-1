@@ -36,7 +36,7 @@ export default function Login() {
       const data = await userLogin(formData);
       if (data && data.token) {
         localStorage.setItem("token", data.token);
-        navigate("/");
+        window.location.href = "/"
       }
     } catch (error) {
       console.error("Login error:", error);

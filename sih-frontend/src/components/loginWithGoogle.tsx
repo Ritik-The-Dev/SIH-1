@@ -1,12 +1,10 @@
 import { GoogleOAuthProvider, GoogleLogin } from "@react-oauth/google";
 import { useLoginWithGoogle } from "../services/hooks";
-import { useNavigate } from "react-router-dom";
 import { useRecoilValue } from "recoil";
 import { themeState } from "../store/theme";
 
 export default function GoogleLoginFunction() {
     const darkMode = useRecoilValue(themeState);
-    const navigate = useNavigate();
     const { mutateAsync: userLogin } = useLoginWithGoogle();
 
     return (
@@ -17,7 +15,7 @@ export default function GoogleLoginFunction() {
                         userLogin({ idToken: credentialResponse.credential })
                             .then(data => {
                                 if (data && data?.success) {
-                                    navigate("/");
+                                    window.location.href = "/"
                                 }
                             });
                     }}
