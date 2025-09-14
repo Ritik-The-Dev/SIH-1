@@ -3,37 +3,31 @@ import express from "express";
 import Router from "./routes/Routes.js";
 import cookieParser from "cookie-parser";
 import connectDb from "./config/connectDb.js";
-import { config } from "dotenv";
-import path from "path";
-import { fileURLToPath } from "url";
+import dotenv from "dotenv";
 
-// ✅ Fix __dirname in ES module
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
+dotenv.config();
 connectDb();
 
 const app = express();
-config();
 
+// ✅ Allow frontend origin + credentials
 app.use(
   cors({
-    origin: "*", 
-    credentials: true,
+    origin: "http://localhost:5173", // your frontend URL
+    credentials: true,               // allow cookies, auth headers
   })
 );
 
 app.use(express.json());
 app.use(cookieParser());
-app.use(express.static(path.join(__dirname, ".", "builds", "sih")));
 
 const PORT = process.env.PORT || 5000;
 
-app.use("/api/v1", Router);
-
-app.get(/.*/, (req, res) => {
-  res.sendFile(path.join(__dirname, ".", "builds", "sih", "index.html"));
+app.get("/", (req, res) => {
+  res.send("API is running...");
 });
+
+app.use("/api/v1", Router);
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
