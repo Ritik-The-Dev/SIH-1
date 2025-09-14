@@ -4,7 +4,7 @@ import multer from "multer";
 import { CloudinaryStorage } from "multer-storage-cloudinary";
 import cloudinary from "../config/cloudinary.js";
 import mammoth from "mammoth";
-import pdf from "pdf-parse";
+import PDFParser from "pdf2json"; 
 
 // ✅ Storage for saving resumes to Cloudinary
 const cloudStorage = new CloudinaryStorage({
@@ -159,8 +159,16 @@ export const extractResumeText = async (req, res) => {
     let text = "";
 
     if (originalName.endsWith(".pdf")) {
-      const data = await pdf(buffer);
-      text = data.text;
+      const pdfParser = new PDFParser();
+
+      text = await new Promise((resolve, reject) => {
+        pdfParser.on("pdfParser_dataError", (err) => reject(err.parserError));
+        pdfParser.on("pdfParser_dataReady", (pdfData) => {
+          resolve(pdfParser.getRawTextContent());
+        });
+
+        pdfParser.parseBuffer(buffer);
+      });
     } else if (originalName.endsWith(".docx")) {
       const data = await mammoth.extractRawText({ buffer });
       text = data.value;
@@ -172,41 +180,19 @@ export const extractResumeText = async (req, res) => {
 
     // === Regex Parsers ===
     const nameMatch = text.match(/([A-Z][a-z]+(?:\s[A-Z][a-z]+){0,2})/);
-    const emailMatch = text.match(
-      /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-z]{2,}/
-    );
+    const emailMatch = text.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-z]{2,}/);
     const phoneMatch = text.match(/(\+?\d{1,3}[-\s]?)?\d{10}/);
 
     // Skills extraction
     const skillsList = [
-      "JavaScript",
-      "React",
-      "Node.js",
-      "Python",
-      "Java",
-      "C++",
-      "SQL",
-      "Machine Learning",
-      "Data Science",
-      "AWS",
-      "Docker",
-      "Kubernetes",
-      "HTML",
-      "CSS",
-      "MongoDB",
-      "Express",
-      "Figma",
-      "NextJS",
-      "Postgres",
+      "JavaScript", "React", "Node.js", "Python", "Java", "C++", "SQL", "Machine Learning",
+      "Data Science", "AWS", "Docker", "Kubernetes", "HTML", "CSS", "MongoDB", "Express",
+      "Figma", "NextJS", "Postgres",
     ];
-    const skills = skillsList.filter((skill) =>
-      text.toLowerCase().includes(skill.toLowerCase())
-    );
+    const skills = skillsList.filter((skill) => text.toLowerCase().includes(skill.toLowerCase()));
 
     // Extract education section
-    const educationMatches = text.match(
-      /EDUCATION([\s\S]*?)(EXPERIENCE|PROJECTS|CERTIFICATIONS|$)/i
-    );
+    const educationMatches = text.match(/EDUCATION([\s\S]*?)(EXPERIENCE|PROJECTS|CERTIFICATIONS|$)/i);
     const education = [];
     if (educationMatches) {
       const eduText = educationMatches[1];
@@ -215,8 +201,7 @@ export const extractResumeText = async (req, res) => {
           education.push({
             institution: line.trim(),
             degree: line.match(/BCA|B\.?Tech|MCA|MBA|BSc|MSc/i)?.[0] || "",
-            fieldOfStudy:
-              line.match(/Computer Science|IT|Electronics/i)?.[0] || "",
+            fieldOfStudy: line.match(/Computer Science|IT|Electronics/i)?.[0] || "",
             startDate: line.match(/\d{4}/g)?.[0] || "",
             endDate: line.match(/\d{4}/g)?.[1] || "",
             grade: line.match(/CGPA|GPA|[0-9]\.[0-9]/)?.[0] || "",
@@ -226,9 +211,7 @@ export const extractResumeText = async (req, res) => {
     }
 
     // Extract experience section
-    const experienceMatches = text.match(
-      /EXPERIENCE([\s\S]*?)(PROJECTS|EDUCATION|CERTIFICATIONS|$)/i
-    );
+    const experienceMatches = text.match(/EXPERIENCE([\s\S]*?)(PROJECTS|EDUCATION|CERTIFICATIONS|$)/i);
     const experience = [];
     if (experienceMatches) {
       const expText = experienceMatches[1];
@@ -237,27 +220,16 @@ export const extractResumeText = async (req, res) => {
           experience.push({
             role: entry.match(/^[^\|]+/i)?.[0].trim() || "",
             company: entry.match(/\|\s*([A-Za-z0-9&\s]+)/)?.[1]?.trim() || "",
-            startDate:
-              entry.match(
-                /(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s?\d{4}/i
-              )?.[0] || "",
-            endDate:
-              entry.match(
-                /-\s*(Present|Currently|[A-Za-z]{3}\s?\d{4})/i
-              )?.[1] || "",
-            description: entry
-              .split("∗")
-              .slice(1)
-              .map((d) => d.trim()),
+            startDate: entry.match(/(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s?\d{4}/i)?.[0] || "",
+            endDate: entry.match(/-\s*(Present|Currently|[A-Za-z]{3}\s?\d{4})/i)?.[1] || "",
+            description: entry.split("∗").slice(1).map((d) => d.trim()),
           });
         }
       });
     }
 
     // Extract projects section
-    const projectMatches = text.match(
-      /PROJECTS([\s\S]*?)(EXPERIENCE|EDUCATION|CERTIFICATIONS|$)/i
-    );
+    const projectMatches = text.match(/PROJECTS([\s\S]*?)(EXPERIENCE|EDUCATION|CERTIFICATIONS|$)/i);
     const projects = [];
     if (projectMatches) {
       const projText = projectMatches[1];
@@ -265,22 +237,15 @@ export const extractResumeText = async (req, res) => {
         if (entry.trim()) {
           projects.push({
             title: entry.split("∗")[0].trim(),
-            technologies: skillsList.filter((skill) =>
-              entry.toLowerCase().includes(skill.toLowerCase())
-            ),
-            description: entry
-              .split("∗")
-              .slice(1)
-              .map((d) => d.trim()),
+            technologies: skillsList.filter((skill) => entry.toLowerCase().includes(skill.toLowerCase())),
+            description: entry.split("∗").slice(1).map((d) => d.trim()),
           });
         }
       });
     }
 
     // Extract certifications section
-    const certMatches = text.match(
-      /CERTIFICATIONS([\s\S]*?)(PROJECTS|EXPERIENCE|EDUCATION|$)/i
-    );
+    const certMatches = text.match(/CERTIFICATIONS([\s\S]*?)(PROJECTS|EXPERIENCE|EDUCATION|$)/i);
     const certifications = [];
     if (certMatches) {
       const certText = certMatches[1];
@@ -288,9 +253,7 @@ export const extractResumeText = async (req, res) => {
         if (line.trim()) {
           certifications.push({
             name: line.trim(),
-            issuingOrganization:
-              line.match(/Coursera|Udemy|LinkedIn|Google|Microsoft/i)?.[0] ||
-              "",
+            issuingOrganization: line.match(/Coursera|Udemy|LinkedIn|Google|Microsoft/i)?.[0] || "",
             issueDate: line.match(/\d{4}/)?.[0] || "",
             expiryDate: "",
             credentialId: "",
