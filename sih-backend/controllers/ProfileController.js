@@ -4,7 +4,7 @@ import multer from "multer";
 import { CloudinaryStorage } from "multer-storage-cloudinary";
 import cloudinary from "../config/cloudinary.js";
 import mammoth from "mammoth";
-import pdfParse from "pdf-parse";
+import pdf from "pdf-parse";
 
 // ✅ Storage for saving resumes to Cloudinary
 const cloudStorage = new CloudinaryStorage({
@@ -159,7 +159,7 @@ export const extractResumeText = async (req, res) => {
     let text = "";
 
     if (originalName.endsWith(".pdf")) {
-      const data = await pdfParse(buffer);
+      const data = await pdf(buffer);
       text = data.text;
     } else if (originalName.endsWith(".docx")) {
       const data = await mammoth.extractRawText({ buffer });
