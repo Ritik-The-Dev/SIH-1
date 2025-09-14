@@ -1,133 +1,123 @@
-import { useState } from "react";
-import { FaClipboardCheck } from "react-icons/fa";
-import FilterSection from "../components/filters";
+import { useState, useEffect } from "react";
+import { FaClipboardCheck, FaSpinner } from "react-icons/fa";
 import InternshipCard from "../components/cards";
+import { useRecoilValue } from "recoil";
+import { themeState } from "../store/theme";
+import { useTranslation } from "react-i18next";
+import { useMyApplications } from "../services/hooks";
 
 export default function MyApplications() {
-    const [showAll, setShowAll] = useState(false);
-    const [searchQuery, setSearchQuery] = useState("");
-    const [filters, setFilters] = useState({
-        type: "",
-        duration: "",
-        stipend: "",
-        location: "",
-        skills: []
+    const { t } = useTranslation();
+    const darkMode = useRecoilValue(themeState);
+    const [applications, setApplications] = useState<any[]>([]);
+
+    const { data, isLoading, isFetching } = useMyApplications({
+        page: 1,
+        limit: 999999,
     });
 
-    // Sample applications (replace later with DB or API data)
-    const appliedInternships = [
-        {
-            id: 11,
-            title: "AI/ML Research Intern",
-            company: "Innovate Labs",
-            location: "Remote",
-            type: "Full-time",
-            duration: "4 months",
-            stipend: "₹25,000 /month",
-            skills: ["Python", "TensorFlow", "Deep Learning", "NLP"],
-            status: "Under Review"
-        },
-        {
-            id: 12,
-            title: "Business Analyst Intern",
-            company: "GrowthEdge Consulting",
-            location: "Mumbai",
-            type: "Part-time",
-            duration: "3 months",
-            stipend: "₹12,000 /month",
-            skills: ["Excel", "SQL", "Data Analysis", "Power BI"],
-            status: "Shortlisted"
-        },
-        {
-            id: 13,
-            title: "Frontend Developer Intern",
-            company: "Webify Solutions",
-            location: "Delhi",
-            type: "Full-time",
-            duration: "6 months",
-            stipend: "₹18,000 /month",
-            skills: ["React", "TypeScript", "CSS", "Tailwind"],
-            status: "Applied"
-        }
-    ];
+    // ✅ Handle API response
+    useEffect(() => {
+        if (!data) return;
 
-    // Apply same filters as Home/Favourite
-    const filteredInternships = appliedInternships.filter(internship => {
-        const matchesSearch = internship.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            internship.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            internship.skills.some(skill => skill.toLowerCase().includes(searchQuery.toLowerCase()));
+        const newApplications = Array.isArray(data?.applications)
+            ? data.applications
+            : [];
 
-        const matchesType = !filters.type || internship.type === filters.type;
-        const matchesDuration = !filters.duration || internship.duration === filters.duration;
-
-        const matchesStipend = !filters.stipend || (
-            filters.stipend === "Unpaid" ? internship.stipend.includes("Unpaid") :
-                filters.stipend === "Under ₹5k" ? parseInt(internship.stipend.replace(/[^0-9]/g, '')) < 5000 :
-                    filters.stipend === "₹5k - ₹10k" ? parseInt(internship.stipend.replace(/[^0-9]/g, '')) >= 5000 && parseInt(internship.stipend.replace(/[^0-9]/g, '')) <= 10000 :
-                        filters.stipend === "₹10k - ₹20k" ? parseInt(internship.stipend.replace(/[^0-9]/g, '')) >= 10000 && parseInt(internship.stipend.replace(/[^0-9]/g, '')) <= 20000 :
-                            filters.stipend === "₹20k+" ? parseInt(internship.stipend.replace(/[^0-9]/g, '')) > 20000 : true
-        );
-
-        const matchesLocation = !filters.location || internship.location === filters.location;
-        const matchesSkills = filters.skills.length === 0 || filters.skills.every(skill => internship.skills.includes(skill));
-
-        return matchesSearch && matchesType && matchesDuration && matchesStipend && matchesLocation && matchesSkills;
-    });
-
-    const displayedInternships = showAll ? filteredInternships : filteredInternships.slice(0, 5);
+        setApplications(newApplications);
+    }, [data]);
 
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8 px-4 sm:px-6 lg:px-8">
+        <main
+            className={`min-h-screen py-8 px-4 sm:px-6 lg:px-8 ${darkMode ? "bg-gray-900 text-white" : "bg-gray-50 text-gray-900"
+                }`}
+            aria-label="My Applications Page"
+        >
             <div className="max-w-7xl mx-auto">
-                <div className="text-center mb-8">
-                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                        My Applications
+                {/* Header */}
+                <header className="text-center mb-8" aria-label="page-header">
+                    <h1
+                        className={`text-3xl font-bold mb-2 ${darkMode ? "text-white" : "text-gray-900"
+                            }`}
+                    >
+                        {t("myApplications.title", "My Applications")}
                     </h1>
-                    <p className="text-gray-600 dark:text-gray-400">
-                        Track internships you have applied to
+                    <p className={darkMode ? "text-gray-400" : "text-gray-600"}>
+                        {t(
+                            "myApplications.subtitle",
+                            "Track internships you have applied to"
+                        )}
                     </p>
-                </div>
+                </header>
 
-                <FilterSection
-                    searchQuery={searchQuery}
-                    setSearchQuery={setSearchQuery}
-                    filters={filters}
-                    setFilters={setFilters}
-                />
+                {/* Applications Grid */}
+                {applications.length > 0 && (
+                    <section
+                        className="grid grid-cols-1 gap-6 mb-8"
+                        aria-label="applications-list"
+                    >
+                        {applications.map((app, index) => {
+                            const jobId = app?.job?._id || index;
+                            if (applications.length === index + 1) {
+                                return (
+                                    <div key={jobId}>
+                                        <InternshipCard
+                                            myApplications={true}
+                                            job={app.job}
+                                            status={app.status}
+                                            appliedAt={app.appliedAt}
+                                        />
+                                    </div>
+                                );
+                            }
+                            return (
+                                <InternshipCard
+                                    myApplications={true}
+                                    key={jobId}
+                                    job={app.job}
+                                    status={app.status}
+                                    appliedAt={app.appliedAt}
+                                />
+                            );
+                        })}
+                    </section>
+                )}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                    {displayedInternships.map((internship) => (
-                        <InternshipCard
-                            key={internship.id}
-                            internship={internship}
-                            isFeatured={false}
-                            // Passing status so InternshipCard can show e.g. "Applied", "Shortlisted"
-                            status={internship.status}
-                        />
-                    ))}
-                </div>
-
-                {filteredInternships.length > 5 && (
-                    <div className="text-center">
-                        <button
-                            onClick={() => setShowAll(!showAll)}
-                            className="px-6 py-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-medium"
-                        >
-                            {showAll ? 'Show Less' : `Show All (${filteredInternships.length})`}
-                        </button>
+                {/* Loader */}
+                {(isLoading || isFetching) && (
+                    <div className="flex justify-center py-6" aria-label="loading">
+                        <FaSpinner className="animate-spin text-blue-600 text-2xl" />
                     </div>
                 )}
 
-                {filteredInternships.length === 0 && (
-                    <div className="text-center py-12">
-                        <div className="inline-flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 p-4 mb-4">
-                            <FaClipboardCheck className="text-gray-500 dark:text-gray-400 text-2xl" />
+                {/* Empty State */}
+                {!isLoading && !isFetching && applications.length === 0 && (
+                    <section className="text-center py-12" aria-label="empty-state">
+                        <div
+                            className={`inline-flex items-center justify-center rounded-full p-4 mb-4 ${darkMode ? "bg-gray-800" : "bg-gray-100"
+                                }`}
+                        >
+                            <FaClipboardCheck
+                                className={`text-2xl ${darkMode ? "text-gray-400" : "text-gray-500"
+                                    }`}
+                                aria-hidden="true"
+                            />
                         </div>
-                        <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No applications yet</h3>
-                        <p className="text-gray-500 dark:text-gray-400">Your applied internships will appear here</p>
-                    </div>
+                        <h3
+                            className={`text-lg font-medium mb-2 ${darkMode ? "text-white" : "text-gray-900"
+                                }`}
+                        >
+                            {t("myApplications.emptyTitle", "No applications yet")}
+                        </h3>
+                        <p className={darkMode ? "text-gray-400" : "text-gray-500"}>
+                            {t(
+                                "myApplications.emptyDescription",
+                                "Your applied internships will appear here"
+                            )}
+                        </p>
+                    </section>
                 )}
             </div>
-        </div>
+        </main>
     );
 }

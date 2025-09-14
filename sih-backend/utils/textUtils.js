@@ -1,49 +1,27 @@
 // utils/textUtils.js
-import PDFParser from "pdf2json";
 import _ from "lodash";
+import pdf from "pdf-parse";
 
 /**
- * Extract text from an uploaded PDF resume buffer using pdf2json
- * @param {Buffer} fileBuffer
+ * Extract text from PDF buffer
+ * @param {Buffer} buffer
  * @returns {Promise<string>}
  */
-export async function extractTextFromPdfBuffer(fileBuffer) {
-  if (!fileBuffer) return "";
-
-  return new Promise((resolve, reject) => {
-    try {
-      const pdfParser = new PDFParser();
-
-      pdfParser.on("pdfParser_dataError", errData => {
-        console.error("pdf2json parse error:", errData.parserError);
-        resolve(""); // return empty string on error
-      });
-
-      pdfParser.on("pdfParser_dataReady", pdfData => {
-        // Extract text from all pages
-        const rawText = pdfData.formImage.Pages
-          .map(page =>
-            page.Texts
-              .map(t => decodeURIComponent(t.R.map(r => r.T).join("")))
-              .join(" ")
-          )
-          .join(" ");
-        resolve(rawText);
-      });
-
-      // Load buffer
-      pdfParser.parseBuffer(fileBuffer);
-    } catch (err) {
-      console.error("pdf2json error:", err);
-      resolve("");
+export const extractTextFromPdfBuffer = async (buffer) => {
+  try {
+    if (!buffer || buffer.length === 0) {
+      throw new Error("Empty PDF buffer");
     }
-  });
-}
+    const data = await pdf(buffer);
+    return data.text || "";
+  } catch (err) {
+    console.error("PDF parsing error:", err.message);
+    return "";
+  }
+};
 
 /**
- * Build a single normalized "profile" text from user preferences and resume text
- * so TF-IDF can compare text easily.
- * @param {Object} prefs - { skills:[], education:[], experience:[], age, otherText }
+ * Build normalized profile text for TF-IDF comparison
  */
 export function buildProfileText(prefs = {}) {
   const parts = [];
@@ -60,27 +38,26 @@ export function buildProfileText(prefs = {}) {
   if (Array.isArray(prefs.education) && prefs.education.length)
     parts.push(
       prefs.education
-        .map(e => `${e.degree || ""} ${e.school || ""} ${e.year || ""}`)
+        .map((e) => `${e.degree || ""} ${e.school || ""} ${e.year || ""}`)
         .join(" ")
     );
 
   if (Array.isArray(prefs.experience) && prefs.experience.length)
     parts.push(
       prefs.experience
-        .map(x => `${x.role || ""} ${x.company || ""} ${x.description || ""}`)
+        .map((x) => `${x.role || ""} ${x.company || ""} ${x.description || ""}`)
         .join(" ")
     );
 
   if (Array.isArray(prefs.projects) && prefs.projects.length)
     parts.push(
       prefs.projects
-        .map(p => `${p.title || ""} ${p.tech || ""} ${p.description || ""}`)
+        .map((p) => `${p.title || ""} ${p.tech || ""} ${p.description || ""}`)
         .join(" ")
     );
 
   if (prefs.resumeText) parts.push(prefs.resumeText);
   if (prefs.freeText) parts.push(prefs.freeText);
 
-  const combined = parts.join(" ").replace(/\s+/g, " ").toLowerCase();
-  return _.trim(combined);
+  return _.trim(parts.join(" ").replace(/\s+/g, " ").toLowerCase());
 }

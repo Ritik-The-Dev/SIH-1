@@ -5,9 +5,10 @@ import {
   extractResumeText,
   getProfile,
   updateProfile,
+  uploadResumeForText,
   uploadResumes,
 } from "../controllers/ProfileController.js";
-import { login, signUp } from "../controllers/AuthController.js";
+import { login, signInWithGoogle, signUp } from "../controllers/AuthController.js";
 import {
   applyForJob,
   getJobsRecommendations,
@@ -22,10 +23,11 @@ const upload = multer({ storage: multer.memoryStorage() }); // stores files in m
 // ✅ Auth routes
 router.post("/signUp", signUp);
 router.post("/login", login);
+router.post("/signInWithGoogle", signInWithGoogle);
 
 // ✅ Profile routes
 router.get("/profile", authMiddleware, getProfile);
-router.post("/updateProfile", authMiddleware, uploadResumes, updateProfile); // uploadResumes should handle multiple files
+router.post("/updateProfile", authMiddleware, updateProfile); 
 
 // ✅ Recommendation engine
 router.post("/recommend", authMiddleware, getJobsRecommendations);
@@ -34,7 +36,12 @@ router.post("/recommend", authMiddleware, getJobsRecommendations);
 router.post("/apply/:jobId", authMiddleware, applyForJob);
 router.get("/myApplications", authMiddleware, getMyApplications); // changed to GET
 
+router.post("/logout", authMiddleware, (req, res) => {
+  res.cookie("Authorization", "", { httpOnly: true, expires: new Date(0) });
+  res.status(200).json({ success : true , message: "Logged out successfully" });
+});
+
 // ✅ Resume extraction
-router.post("/extract", authMiddleware, upload.single("resume"), extractResumeText);
+router.post("/extract", authMiddleware, uploadResumeForText, extractResumeText);
 
 export default router;

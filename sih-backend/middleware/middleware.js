@@ -4,7 +4,7 @@ import User from "../models/User.js"; // adjust extension if needed
 export const authMiddleware = async (req, res, next) => {
   try {
     const authHeader = req.cookies["Authorization"];
-
+    
     if (!authHeader) {
       return res
         .status(401)

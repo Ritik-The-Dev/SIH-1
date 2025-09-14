@@ -1,20 +1,32 @@
+// src/i18n.ts
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
-import HttpBackend from 'i18next-http-backend';
 import LanguageDetector from 'i18next-browser-languagedetector';
+import enTranslation from './locales/en/translation.json';
+import hiTranslation from './locales/hi/translation.json';
+
+const resources = {
+  en: {
+    translation: enTranslation
+  },
+  hi: {
+    translation: hiTranslation
+  }
+};
 
 i18n
-  .use(HttpBackend) 
-  .use(LanguageDetector) 
-  .use(initReactI18next) 
+  .use(LanguageDetector)
+  .use(initReactI18next)
   .init({
+    resources,
     fallbackLng: 'en',
-    debug: true,
+    debug: import.meta.env.VITE_NODE_ENV === 'development',
     interpolation: {
       escapeValue: false,
     },
-    backend: {
-      loadPath: '/locales/{{lng}}/{{ns}}.json',
+    detection: {
+      order: ['localStorage', 'navigator'],
+      caches: ['localStorage'],
     },
   });
 
