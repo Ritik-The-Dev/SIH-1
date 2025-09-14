@@ -202,7 +202,7 @@ export default function Profile() {
       const res: any = await updateProfile(payload);
 
       if (res.success) {
-        toast.success("Profile updated successfully");
+        window.location.href = "/"
       }
     } catch (err) {
       console.error(err);
@@ -218,14 +218,12 @@ export default function Profile() {
 
   return (
     <div
-      className={`min-h-screen py-8 px-4 sm:px-6 lg:px-8 transition-colors duration-300 ${
-        darkMode ? "bg-gray-900" : "bg-gray-50"
-      }`}
+      className={`min-h-screen py-8 px-4 sm:px-6 lg:px-8 transition-colors duration-300 ${darkMode ? "bg-gray-900" : "bg-gray-50"
+        }`}
     >
       <div
-        className={`max-w-4xl mx-auto p-6 space-y-10 rounded-xl shadow-lg transition-colors duration-300 ${
-          darkMode ? "bg-gray-800 text-gray-100" : "bg-white text-gray-900"
-        }`}
+        className={`max-w-4xl mx-auto p-6 space-y-10 rounded-xl shadow-lg transition-colors duration-300 ${darkMode ? "bg-gray-800 text-gray-100" : "bg-white text-gray-900"
+          }`}
       >
         <div className="flex w-full items-center justify-between ">
           <h1 className="text-3xl font-bold">{t("Profile")}</h1>
@@ -259,13 +257,11 @@ export default function Profile() {
                 value={(basicInfo as any)[field]}
                 readOnly={field === "email"}
                 onChange={(e) => setBasicInfo({ ...basicInfo, [field]: e.target.value })}
-                className={`p-3 ${
-                  field === "email" ? "cursor-not-allowed" : ""
-                } border rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  darkMode
+                className={`p-3 ${field === "email" ? "cursor-not-allowed" : ""
+                  } border rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500 ${darkMode
                     ? "bg-gray-700 text-white border-gray-600"
                     : "bg-gray-100 text-gray-900 border-gray-300"
-                }`}
+                  }`}
               />
             ))}
             <input
@@ -273,11 +269,10 @@ export default function Profile() {
               placeholder={t("skills")}
               value={basicInfo.skills}
               onChange={(e) => setBasicInfo({ ...basicInfo, skills: e.target.value })}
-              className={`p-3 border rounded-lg w-full col-span-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                darkMode
+              className={`p-3 border rounded-lg w-full col-span-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${darkMode
                   ? "bg-gray-700 text-white border-gray-600"
                   : "bg-gray-100 text-gray-900 border-gray-300"
-              }`}
+                }`}
             />
           </div>
         </section>
@@ -290,9 +285,8 @@ export default function Profile() {
               {section.state.map((item: any, index: number) => (
                 <div
                   key={index}
-                  className={`p-4 rounded-lg border ${
-                    darkMode ? "bg-gray-700 border-gray-600" : "bg-gray-50 border-gray-200"
-                  } flex flex-col gap-3`}
+                  className={`p-4 rounded-lg border ${darkMode ? "bg-gray-700 border-gray-600" : "bg-gray-50 border-gray-200"
+                    } flex flex-col gap-3`}
                 >
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     {section.fields.map((field, fIndex) => (
@@ -306,11 +300,10 @@ export default function Profile() {
                           updated[index][field] = e.target.value;
                           section.setter(updated);
                         }}
-                        className={`p-3 border rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                          darkMode
+                        className={`p-3 border rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500 ${darkMode
                             ? "bg-gray-600 text-white border-gray-500"
                             : "bg-white text-gray-900 border-gray-300"
-                        }`}
+                          }`}
                       />
                     ))}
                   </div>
@@ -362,9 +355,8 @@ export default function Profile() {
             {resumes.map((file, index) => (
               <li
                 key={index}
-                className={`flex justify-between items-center p-2 rounded ${
-                  darkMode ? "bg-gray-600 text-white" : "bg-gray-100 text-gray-900"
-                }`}
+                className={`flex justify-between items-center p-2 rounded ${darkMode ? "bg-gray-600 text-white" : "bg-gray-100 text-gray-900"
+                  }`}
               >
                 <a href={file.url} target="_blank" className="truncate cursor-pointer hover:underline">{file.name}</a>
                 <button
@@ -382,9 +374,8 @@ export default function Profile() {
         <div className="text-right">
           <button
             onClick={handleSaveProfile}
-            className={`px-6 py-3 rounded-lg transition-colors ${
-              (updating || isUploading) ? "bg-gray-400 cursor-not-allowed" : "bg-green-600 hover:bg-green-700 text-white"
-            }`}
+            className={`px-6 py-3 rounded-lg transition-colors ${(updating || isUploading) ? "bg-gray-400 cursor-not-allowed" : "bg-green-600 hover:bg-green-700 text-white"
+              }`}
           >
             {isUploading ? "Uploading Resumes..." : updating ? t("Saving...") : t("Save Profile")}
           </button>
