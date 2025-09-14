@@ -24,17 +24,13 @@ app.use(
 );
 app.use(express.json());
 app.use(cookieParser());
-app.use(express.static(path.join(__dirname, "..", "builds", "sih")));
+app.use(express.static(path.join(__dirname, "builds", "sih")));
 
 const PORT = process.env.PORT || 5000;
 
-app.get("/", (req, res) => {
-  res.send("API is running...");
-});
-
 app.use("/api/v1", Router);
 
-app.use((req, res) => {
+app.get(/.*/, (req, res) => {
   res.sendFile(path.join(__dirname, "builds", "sih", "index.html"));
 });
 
