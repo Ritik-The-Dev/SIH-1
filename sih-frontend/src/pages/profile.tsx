@@ -6,13 +6,13 @@ import { themeState } from "../store/theme";
 import { userState } from "../store/profile";
 import { useExtractText, useUpdateProfile } from "../services/hooks";
 import toast from "react-hot-toast";
-import { useNavigate } from "react-router-dom";
-import { useQueryClient } from "react-query";
+// import { useNavigate } from "react-router-dom";
+// import { useQueryClient } from "react-query";
 
 export default function Profile() {
   const { t } = useTranslation();
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
+  // const navigate = useNavigate();
+  // const queryClient = useQueryClient();
   const darkMode = useRecoilValue(themeState);
   const user: any = useRecoilValue(userState);
   const [isUploading, setIsUploading] = useState(false);
@@ -135,7 +135,6 @@ export default function Profile() {
         const { extracted } = res;
         setBasicInfo((prev) => ({
           ...prev,
-          name: extracted.name || prev.name,
           phone: extracted.phone || prev.phone,
           address: extracted.address || prev.address,
           skills: extracted.skills?.join(", ") || prev.skills,
@@ -213,8 +212,9 @@ export default function Profile() {
       };
       const res: any = await updateProfile(payload);
       if (res.success) {
-        navigate('/')
-        queryClient.invalidateQueries(["profile"]);
+        // navigate('/')
+        // queryClient.invalidateQueries(["profile"]);
+        window.location.href = "/"
       }
     } catch (err) {
       console.error(err);
