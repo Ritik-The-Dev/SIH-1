@@ -1,8 +1,6 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
-  FaSun,
-  FaMoon,
   FaGlobe,
   FaUser,
   FaLock,
@@ -11,7 +9,7 @@ import {
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import AuthAnimation from "../components/authAnimation";
-import { useRecoilState } from "recoil";
+import { useRecoilValue } from "recoil";
 import { themeState } from "../store/theme";
 import { useSignUp } from "../services/hooks";
 import toast from "react-hot-toast";
@@ -23,7 +21,7 @@ const cn = (...classes: string[]) => classes.filter(Boolean).join(" ");
 export default function Signup() {
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
-  const [darkMode, setDarkMode] = useRecoilState(themeState);
+  const darkMode = useRecoilValue(themeState);
   const { mutateAsync: signUp, isLoading: loading } = useSignUp();
   const [formData, setFormData] = useState({
     name: "",

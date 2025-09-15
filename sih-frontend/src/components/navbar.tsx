@@ -2,18 +2,14 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import {
-  FaSun,
-  FaMoon,
   FaHome,
   FaTasks,
   FaUserCircle,
   FaSignOutAlt,
   FaSignInAlt,
-  FaBars,
-  FaTimes,
   FaRocket,
 } from "react-icons/fa";
-import { useRecoilState, useRecoilValue } from "recoil";
+import { useRecoilValue } from "recoil";
 import { userState } from "../store/profile";
 import { themeState } from "../store/theme";
 import { useLogout } from "../services/hooks";
@@ -31,9 +27,8 @@ function Navigation() {
   const user = useRecoilValue(userState);
   const [showDropdown, setShowDropdown] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [darkMode, setDarkMode] = useRecoilState(themeState);
+  const darkMode = useRecoilValue(themeState);
   const [showSignOutPopup, setShowSignOutPopup] = useState(false);
-  const toggleDarkMode = () => setDarkMode((prev) => !prev);
   const { mutateAsync: handleLogout } = useLogout();
 
   const changeLanguage = (lng: string) => {

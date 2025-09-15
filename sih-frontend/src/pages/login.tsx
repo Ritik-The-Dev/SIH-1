@@ -1,8 +1,6 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
-  FaSun,
-  FaMoon,
   FaGlobe,
   FaUser,
   FaLock,
@@ -10,7 +8,7 @@ import {
 } from "react-icons/fa";
 import AuthAnimation from "../components/authAnimation";
 import { useNavigate } from "react-router-dom";
-import { useRecoilState } from "recoil";
+import { useRecoilValue } from "recoil";
 import { themeState } from "../store/theme";
 import { useLogin } from "../services/hooks";
 import GoogleLoginFunction from "../components/loginWithGoogle";
@@ -20,7 +18,7 @@ const cn = (...classes: string[]) => classes.filter(Boolean).join(" ");
 export default function Login() {
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
-  const [darkMode, setDarkMode] = useRecoilState(themeState);
+  const darkMode = useRecoilValue(themeState);
   const [formData, setFormData] = useState({ email: "", password: "" });
   const { mutateAsync: userLogin, isLoading: loading } = useLogin();
   // const toggleDarkMode = () => setDarkMode(!darkMode);
