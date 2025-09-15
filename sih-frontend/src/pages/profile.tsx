@@ -6,16 +6,19 @@ import { themeState } from "../store/theme";
 import { userState } from "../store/profile";
 import { useExtractText, useUpdateProfile } from "../services/hooks";
 import toast from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "react-query";
 
 export default function Profile() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const darkMode = useRecoilValue(themeState);
   const user: any = useRecoilValue(userState);
   const [isUploading, setIsUploading] = useState(false);
   const { mutateAsync: updateProfile, isLoading: updating } = useUpdateProfile();
   const { mutateAsync: parseResume, isLoading: extracting } = useExtractText();
 
-  // ✅ State for all profile fields
   const [basicInfo, setBasicInfo] = useState({
     name: "",
     email: "",
@@ -29,10 +32,9 @@ export default function Profile() {
   const [projects, setProjects] = useState([{ title: "", description: "", tech: "" }]);
   const [certifications, setCertifications] = useState([{ name: "", org: "", year: "" }]);
 
-  // ✅ Store resume name + url
   const [resumes, setResumes] = useState<{ name: string; url: string }[]>([]);
 
-  // ✅ Populate defaults from user
+  // 🔄 Load user and normalize arrays → text
   useEffect(() => {
     if (user) {
       setBasicInfo({
@@ -40,13 +42,33 @@ export default function Profile() {
         email: user.email || "",
         phone: user.number || "",
         address: user.address || "",
-        skills: user.skills?.join(", ") || "",
+        skills: Array.isArray(user.skills) ? user.skills.join(", ") : user.skills || "",
       });
+
       setEducation(user.education?.length ? user.education : [{ school: "", degree: "", year: "" }]);
-      setExperience(user.experience?.length ? user.experience : [{ company: "", role: "", duration: "", description: "" }]);
-      setProjects(user.projects?.length ? user.projects : [{ title: "", description: "", tech: "" }]);
+
+      setExperience(
+        user.experience?.length
+          ? user.experience.map((exp: any) => ({
+            ...exp,
+            description: Array.isArray(exp.description) ? exp.description.join("\n") : exp.description || "",
+          }))
+          : [{ company: "", role: "", duration: "", description: "" }]
+      );
+
+      setProjects(
+        user.projects?.length
+          ? user.projects.map((proj: any) => ({
+            ...proj,
+            tech: Array.isArray(proj.tech) ? proj.tech.join(", ") : proj.tech || "",
+            description: Array.isArray(proj.description) ? proj.description.join("\n") : proj.description || "",
+          }))
+          : [{ title: "", description: "", tech: "" }]
+      );
+
       setCertifications(user.certifications?.length ? user.certifications : [{ name: "", org: "", year: "" }]);
-      setResumes(user.resumes || []); // in case backend already has resumes
+
+      setResumes(user.resumes || []);
     }
   }, [user]);
 
@@ -54,37 +76,28 @@ export default function Profile() {
   const handleRemove = (setter: any, state: any, index: number) =>
     setter(state.filter((_: any, i: number) => i !== index));
 
-  // ✅ Upload resumes to Cloudinary
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     try {
       setIsUploading(true);
-
       if (!e.target.files) return;
       const files = Array.from(e.target.files);
-
-      // ✅ Validate PDFs
       const invalidFiles = files.filter((file) => file.type !== "application/pdf");
       if (invalidFiles.length > 0) {
         toast.error("Only PDF files are allowed.");
         return;
       }
-
       const uploadedResumes: { name: string; url: string }[] = [];
-
       for (const file of files) {
         const formData = new FormData();
         formData.append("file", file);
         formData.append("upload_preset", "unsigned_resume_upload");
         formData.append("folder", "resumes");
-
         try {
           const res = await fetch("https://api.cloudinary.com/v1_1/dw4gtg42m/auto/upload", {
             method: "POST",
             body: formData,
           });
-
           const data = await res.json();
-
           if (data.secure_url) {
             uploadedResumes.push({ name: file.name, url: data.secure_url });
           } else {
@@ -95,7 +108,6 @@ export default function Profile() {
           toast.error(`Error uploading ${file.name}`);
         }
       }
-
       if (uploadedResumes.length > 0) {
         toast.success("Resumes uploaded successfully");
         setResumes((prev) => [...prev, ...uploadedResumes]);
@@ -107,27 +119,20 @@ export default function Profile() {
     }
   };
 
-  // ✅ Parse resume text + auto-fill profile
   const handleResumeUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
-
     const files = Array.from(e.target.files);
     const firstFile = files[0];
-
     if (firstFile.type !== "application/pdf") {
       toast.error("Only PDF files are allowed.");
       return;
     }
-
-    // Auto-extract text from the first file
     const formData = new FormData();
     formData.append("resume", firstFile);
-
     try {
       const res: any = await parseResume(formData);
       if (res.success) {
         const { extracted } = res;
-
         setBasicInfo((prev) => ({
           ...prev,
           name: extracted.name || prev.name,
@@ -135,7 +140,6 @@ export default function Profile() {
           address: extracted.address || prev.address,
           skills: extracted.skills?.join(", ") || prev.skills,
         }));
-
         if (Array.isArray(extracted.education) && extracted.education.length > 0) {
           setEducation(
             extracted.education.map((edu: any) => ({
@@ -145,28 +149,25 @@ export default function Profile() {
             }))
           );
         }
-
         if (Array.isArray(extracted.experience) && extracted.experience.length > 0) {
           setExperience(
             extracted.experience.map((exp: any) => ({
               company: exp.company || "",
               role: exp.role || "",
               duration: exp.duration || "",
-              description: exp.description || "",
+              description: Array.isArray(exp.description) ? exp.description.join("\n") : exp.description || "",
             }))
           );
         }
-
         if (Array.isArray(extracted.projects) && extracted.projects.length > 0) {
           setProjects(
             extracted.projects.map((proj: any) => ({
               title: proj.title || "",
-              description: proj.description || "",
-              tech: proj.tech || "",
+              description: Array.isArray(proj.description) ? proj.description.join("\n") : proj.description || "",
+              tech: Array.isArray(proj.tech) ? proj.tech.join(", ") : proj.tech || "",
             }))
           );
         }
-
         if (Array.isArray(extracted.certifications) && extracted.certifications.length > 0) {
           setCertifications(
             extracted.certifications.map((cert: any) => ({
@@ -177,38 +178,50 @@ export default function Profile() {
           );
         }
       }
-
-      // Also upload resumes
       handleFileUpload(e);
     } catch (err) {
       console.error("Failed to parse resume", err);
     }
   };
 
+  // ✅ Save → convert text back to arrays
   const handleSaveProfile = async () => {
     try {
       const payload = {
         name: basicInfo.name,
         number: basicInfo.phone,
         address: basicInfo.address,
-        skills: basicInfo.skills.split(",").map((s) => s.trim()),
+        skills: basicInfo.skills
+          ? basicInfo.skills.split(",").map((s) => s.trim())
+          : [],
         education,
-        experience,
-        projects,
+        experience: experience.map((exp) => ({
+          ...exp,
+          description: exp.description
+            ? exp.description.split("\n").map((d: string) => d.trim())
+            : [],
+        })),
+        projects: projects.map((proj) => ({
+          ...proj,
+          tech: proj.tech ? proj.tech.split(",").map((t: string) => t.trim()) : [],
+          description: proj.description
+            ? proj.description.split("\n").map((d: string) => d.trim())
+            : [],
+        })),
         certifications,
         resumes,
       };
-
       const res: any = await updateProfile(payload);
-
       if (res.success) {
-        window.location.href = "/"
+        navigate('/')
+        queryClient.invalidateQueries(["profile"]);
       }
     } catch (err) {
       console.error(err);
     }
   };
 
+  // 📝 Section configs
   const dynamicSections = [
     { title: t("Education"), state: education, setter: setEducation, fields: ["school", "degree", "year"] },
     { title: t("Experience"), state: experience, setter: setExperience, fields: ["company", "role", "duration", "description"] },
@@ -218,14 +231,15 @@ export default function Profile() {
 
   return (
     <div
-      className={`min-h-screen py-8 px-4 sm:px-6 lg:px-8 transition-colors duration-300 ${darkMode ? "bg-gray-900" : "bg-gray-50"
+      className={`min-h-screen py-6 px-3 sm:px-6 lg:px-8 transition-colors duration-300 ${darkMode ? "bg-gray-900" : "bg-gray-50"
         }`}
     >
       <div
         className={`max-w-4xl mx-auto p-6 space-y-10 rounded-xl shadow-lg transition-colors duration-300 ${darkMode ? "bg-gray-800 text-gray-100" : "bg-white text-gray-900"
           }`}
       >
-        <div className="flex w-full items-center justify-between ">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <h1 className="text-3xl font-bold">{t("Profile")}</h1>
           <section>
             <input
@@ -238,9 +252,11 @@ export default function Profile() {
             />
             <label
               htmlFor="resumeUpload"
-              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 cursor-pointer"
+              role="button"
+              aria-label={t("Upload Resume for Autofill")}
+              className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 cursor-pointer w-full sm:w-auto"
             >
-              <FaUpload /> {extracting ? t("Extracting...") : t("Autofill")}
+              <FaUpload aria-hidden="true" /> {extracting ? t("Extracting...") : t("Autofill")}
             </label>
           </section>
         </div>
@@ -254,24 +270,21 @@ export default function Profile() {
                 key={field}
                 type={field === "email" ? "email" : "text"}
                 placeholder={t(field)}
+                aria-label={t(field)}
                 value={(basicInfo as any)[field]}
                 readOnly={field === "email"}
                 onChange={(e) => setBasicInfo({ ...basicInfo, [field]: e.target.value })}
-                className={`p-3 ${field === "email" ? "cursor-not-allowed" : ""
-                  } border rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500 ${darkMode
-                    ? "bg-gray-700 text-white border-gray-600"
-                    : "bg-gray-100 text-gray-900 border-gray-300"
-                  }`}
+                className={`p-3 border rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500 ${darkMode ? "bg-gray-700 text-white border-gray-600" : "bg-gray-100 text-gray-900 border-gray-300"
+                  } ${field === "email" ? "cursor-not-allowed" : ""}`}
               />
             ))}
             <input
               type="text"
               placeholder={t("skills")}
+              aria-label={t("skills")}
               value={basicInfo.skills}
               onChange={(e) => setBasicInfo({ ...basicInfo, skills: e.target.value })}
-              className={`p-3 border rounded-lg w-full col-span-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${darkMode
-                  ? "bg-gray-700 text-white border-gray-600"
-                  : "bg-gray-100 text-gray-900 border-gray-300"
+              className={`p-3 border rounded-lg w-full col-span-1 sm:col-span-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${darkMode ? "bg-gray-700 text-white border-gray-600" : "bg-gray-100 text-gray-900 border-gray-300"
                 }`}
             />
           </div>
@@ -285,8 +298,8 @@ export default function Profile() {
               {section.state.map((item: any, index: number) => (
                 <div
                   key={index}
-                  className={`p-4 rounded-lg border ${darkMode ? "bg-gray-700 border-gray-600" : "bg-gray-50 border-gray-200"
-                    } flex flex-col gap-3`}
+                  className={`p-4 rounded-lg border flex flex-col gap-3 ${darkMode ? "bg-gray-700 border-gray-600" : "bg-gray-50 border-gray-200"
+                    }`}
                 >
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     {section.fields.map((field, fIndex) => (
@@ -294,15 +307,15 @@ export default function Profile() {
                         key={fIndex}
                         type="text"
                         placeholder={t(field)}
-                        value={item[field]}
+                        aria-label={t(field)}
+                        value={item[field] || ""}
                         onChange={(e) => {
-                          const updated: any = [...section.state];
-                          updated[index][field] = e.target.value;
+                          const updated = section.state.map((obj: any, i: number) =>
+                            i === index ? { ...obj, [field]: e.target.value } : obj
+                          );
                           section.setter(updated);
                         }}
-                        className={`p-3 border rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500 ${darkMode
-                            ? "bg-gray-600 text-white border-gray-500"
-                            : "bg-white text-gray-900 border-gray-300"
+                        className={`p-3 border rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500 ${darkMode ? "bg-gray-600 text-white border-gray-500" : "bg-white text-gray-900 border-gray-300"
                           }`}
                       />
                     ))}
@@ -310,24 +323,22 @@ export default function Profile() {
                   <div className="flex justify-end mt-2">
                     <button
                       onClick={() => handleRemove(section.setter, section.state, index)}
+                      aria-label={t("Delete item")}
                       className="flex items-center gap-1 text-red-500 hover:text-red-600"
                     >
-                      <FaTrash /> {t("Delete")}
+                      <FaTrash aria-hidden="true" /> {t("Delete")}
                     </button>
                   </div>
                 </div>
               ))}
               <button
                 onClick={() =>
-                  handleAdd(
-                    section.setter,
-                    section.state,
-                    Object.fromEntries(section.fields.map((f) => [f, ""]))
-                  )
+                  handleAdd(section.setter, section.state, Object.fromEntries(section.fields.map((f) => [f, ""])))
                 }
+                aria-label={t(`Add ${section.title}`)}
                 className="flex items-center gap-2 text-blue-600 hover:text-blue-700"
               >
-                <FaPlus /> {t(`Add ${section.title}`)}
+                <FaPlus aria-hidden="true" /> {t(`Add ${section.title}`)}
               </button>
             </div>
           </section>
@@ -347,9 +358,11 @@ export default function Profile() {
           />
           <label
             htmlFor="Upload"
-            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 cursor-pointer"
+            role="button"
+            aria-label={t("Upload Resume Files")}
+            className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 cursor-pointer w-full sm:w-auto"
           >
-            <FaUpload /> {isUploading ? t("Uploading...") : t("Upload Files")}
+            <FaUpload aria-hidden="true" /> {isUploading ? t("Uploading...") : t("Upload Files")}
           </label>
           <ul className="mt-4 space-y-2">
             {resumes.map((file, index) => (
@@ -358,12 +371,20 @@ export default function Profile() {
                 className={`flex justify-between items-center p-2 rounded ${darkMode ? "bg-gray-600 text-white" : "bg-gray-100 text-gray-900"
                   }`}
               >
-                <a href={file.url} target="_blank" className="truncate cursor-pointer hover:underline">{file.name}</a>
+                <a
+                  href={file.url}
+                  target="_blank"
+                  aria-label={t("Open Resume File")}
+                  className="truncate cursor-pointer hover:underline"
+                >
+                  {file.name}
+                </a>
                 <button
                   onClick={() => setResumes((prev) => prev.filter((_, i) => i !== index))}
+                  aria-label={t("Delete Resume")}
                   className="text-red-500 hover:text-red-600"
                 >
-                  <FaTrash />
+                  <FaTrash aria-hidden="true" />
                 </button>
               </li>
             ))}
@@ -374,7 +395,10 @@ export default function Profile() {
         <div className="text-right">
           <button
             onClick={handleSaveProfile}
-            className={`px-6 py-3 rounded-lg transition-colors ${(updating || isUploading) ? "bg-gray-400 cursor-not-allowed" : "bg-green-600 hover:bg-green-700 text-white"
+            aria-label={t("Save Profile")}
+            className={`w-full sm:w-auto px-6 py-3 rounded-lg transition-colors ${updating || isUploading
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-green-600 hover:bg-green-700 text-white"
               }`}
           >
             {isUploading ? "Uploading Resumes..." : updating ? t("Saving...") : t("Save Profile")}

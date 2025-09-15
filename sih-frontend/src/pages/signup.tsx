@@ -32,7 +32,7 @@ export default function Signup() {
     confirmPassword: "",
   });
 
-  const toggleDarkMode = () => setDarkMode(!darkMode);
+  // const toggleDarkMode = () => setDarkMode(!darkMode);
   const changeLanguage = (lang: string) => i18n.changeLanguage(lang);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -69,14 +69,14 @@ export default function Signup() {
           <div className="flex justify-between items-center mb-8">
             <div className="flex items-center">
               <FaRocket className="text-blue-500 mr-2 text-xl" />
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              <h1 className="sm:text-2xl text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                 Cosmos Careers
               </h1>
             </div>
 
             <div className="flex space-x-2">
               {/* Dark Mode Toggle */}
-              <button
+              {/* <button
                 onClick={toggleDarkMode}
                 className={cn(
                   "p-2 rounded-lg hover:scale-110 transition-transform",
@@ -85,7 +85,7 @@ export default function Signup() {
                 aria-label="Toggle dark mode"
               >
                 {darkMode ? <FaSun /> : <FaMoon />}
-              </button>
+              </button> */}
 
               {/* Language Switcher */}
               <div

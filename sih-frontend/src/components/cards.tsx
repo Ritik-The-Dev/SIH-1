@@ -27,13 +27,26 @@ export default function InternshipCard({ job, status, myApplications }: any) {
         <div className="p-4">
           {/* Header */}
           <div className="flex justify-between items-center mb-2">
-            <div>
-              <h3
-                className={`font-semibold text-base sm:text-lg ${darkMode ? "text-white" : "text-gray-900"
-                  }`}
-              >
-                {job.role}
-              </h3>
+            <div >
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between w-full gap-2 sm:gap-4">
+                <h3
+                  className={`font-semibold text-lg sm:text-xl flex-shrink-0 ${darkMode ? "text-white" : "text-gray-900"
+                    }`}
+                >
+                  {job.role}
+                </h3>
+                <p
+                  className={`text-sm font-medium px-2 py-1 rounded-full inline-block
+    ${darkMode
+                      ? "bg-gray-700 text-gray-200" // Dark mode: slightly darker badge
+                      : "bg-gray-100 text-gray-800" // Light mode: subtle badge
+                    }`}
+                >
+                  {job.recommendationReason}
+                </p>
+
+
+              </div>
               <p
                 className={`text-sm ${darkMode ? "text-gray-300" : "text-gray-600"
                   }`}
@@ -190,12 +203,12 @@ export default function InternshipCard({ job, status, myApplications }: any) {
                       {/* Label */}
                       <span
                         className={`mt-2 text-xs ${stepCompleted || stepActive
-                            ? darkMode
-                              ? "text-white"
-                              : "text-gray-900"
-                            : darkMode
-                              ? "text-gray-400"
-                              : "text-gray-500"
+                          ? darkMode
+                            ? "text-white"
+                            : "text-gray-900"
+                          : darkMode
+                            ? "text-gray-400"
+                            : "text-gray-500"
                           }`}
                       >
                         {step}

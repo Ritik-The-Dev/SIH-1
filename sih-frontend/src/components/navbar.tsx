@@ -64,7 +64,7 @@ function Navigation() {
                 }`}
             />
             <span
-              className={`font-bold text-xl ${darkMode ? "text-white" : "text-gray-800"
+              className={`font-bold sm:block hidden sm:text-xl text-base ${darkMode ? "text-white" : "text-gray-800"
                 }`}
             >
               Cosmos Careers
@@ -88,24 +88,34 @@ function Navigation() {
 
           {/* Right side */}
           <div className="flex items-center space-x-3">
-            {user?._id ? <button
-              onClick={() => navigate("/applications")}
-              className={`
-    flex items-center cursor-pointer 
-    transition-all duration-200 ease-in-out
-    underline underline-offset-2
-    focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
-    ${darkMode
-                  ? "text-gray-200 hover:text-blue-400"
-                  : "text-gray-700 hover:text-blue-600"
-                }
-  `}
-            >
-              {t("Applications")}
-            </button> : null}
+            {user?._id ?
+              //            <button
+              //             onClick={() => navigate("/applications")}
+              //             className={`
+              //   flex items-center cursor-pointer 
+              //   transition-all duration-200 ease-in-out
+              //   sm:underline underline-offset-2
+              //   focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+              //   ${darkMode
+              //                 ? "text-gray-200 hover:text-blue-400"
+              //                 : "text-gray-700 hover:text-blue-600"
+              //               }
+              // `}
+              //           >
+              //             {t("Applications")}
+              //           </button> 
+              <button
+                onClick={() => navigate("/applications")}
+                className={`block px-4 py-2 rounded-md text-sm font-medium transition border ${darkMode
+                  ? "border-blue-400 text-blue-400 hover:bg-blue-900/20"
+                  : "border-blue-600 text-blue-600 hover:bg-blue-50"
+                  }`}
+              >
+                {t("Applications")}
+              </button> : null}
 
             {/* Dark Mode Toggle */}
-            <button
+            {/* <button
               onClick={toggleDarkMode}
               className={`p-2 ml -5 rounded-full transition ${darkMode
                 ? "bg-gray-700 hover:bg-gray-600"
@@ -118,7 +128,7 @@ function Navigation() {
               ) : (
                 <FaMoon className="text-gray-700 text-lg" />
               )}
-            </button>
+            </button> */}
 
             {/* Language Selector */}
             <div
@@ -251,7 +261,7 @@ function Navigation() {
             )}
 
             {/* Mobile Menu */}
-            <button
+            {/* <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className={`md:hidden p-2 rounded-md transition ${darkMode
                 ? "text-gray-300 hover:bg-gray-700"
@@ -263,7 +273,7 @@ function Navigation() {
               ) : (
                 <FaBars className="text-xl" />
               )}
-            </button>
+            </button> */}
           </div>
         </div>
 

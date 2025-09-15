@@ -90,59 +90,41 @@ export const getProfile = async (req, res) => {
   }
 };
 
-
+// controller/updateProfile.js
 export const updateProfile = async (req, res) => {
   try {
     let updates = { ...req.body };
 
-    // ✅ Parse JSON fields that come as strings
-    const jsonFields = [
-      "education",
-      "experience",
-      "projects",
-      "certifications",
-      "skills",
-      "resumes",
-    ];
-    jsonFields.forEach((field) => {
-      if (updates[field]) {
-        try {
-          updates[field] =
-            typeof updates[field] === "string"
-              ? JSON.parse(updates[field])
-              : updates[field];
-        } catch (err) {
-          console.warn(`Failed to parse field ${field}:`, err.message);
-          updates[field] = [];
-        }
+    // Ensure arrays are always arrays
+    const arrayFields = ["education", "experience", "projects", "certifications", "skills", "resumes"];
+    arrayFields.forEach((field) => {
+      if (updates[field] && !Array.isArray(updates[field])) {
+        updates[field] = [updates[field]];
       }
     });
 
-    // ✅ Update user profile
     const user = await User.findByIdAndUpdate(
       req.user._id,
       { $set: updates },
       { new: true, runValidators: true }
     ).select("-password");
 
-    if (!user) return res.status(404).json({ message: "User not found" });
+    if (!user) return res.status(404).json({ success: false, message: "User not found" });
 
     res.json({ success: true, message: "Profile updated successfully", user });
   } catch (err) {
     console.error("Update Profile Error:", err);
 
-    // ✅ Handle Mongo duplicate key error (e.g., email already exists)
     if (err.code === 11000) {
       const field = Object.keys(err.keyPattern)[0];
       return res.status(400).json({
         success: false,
         message: `${field} already exists`,
-        field: field,
+        field,
         value: err.keyValue[field],
       });
     }
 
-    // ✅ Fallback for other errors
     res.status(500).json({ success: false, message: "Server error", error: err.message });
   }
 };

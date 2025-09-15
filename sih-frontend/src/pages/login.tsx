@@ -23,7 +23,7 @@ export default function Login() {
   const [darkMode, setDarkMode] = useRecoilState(themeState);
   const [formData, setFormData] = useState({ email: "", password: "" });
   const { mutateAsync: userLogin, isLoading: loading } = useLogin();
-  const toggleDarkMode = () => setDarkMode(!darkMode);
+  // const toggleDarkMode = () => setDarkMode(!darkMode);
   const changeLanguage = (lang: string) => i18n.changeLanguage(lang);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -55,14 +55,14 @@ export default function Login() {
           <div className="flex justify-between items-center mb-8">
             <div className="flex items-center">
               <FaRocket className="text-blue-500 mr-2 text-xl" />
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              <h1 className="sm:text-2xl text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                 Cosmos Careers
               </h1>
             </div>
 
             <div className="flex space-x-2">
               {/* Dark Mode Toggle */}
-              <button
+              {/* <button
                 onClick={toggleDarkMode}
                 aria-label="Toggle dark mode"
                 className={`p-2 rounded-lg transition-colors ${darkMode ? "bg-gray-800" : "bg-gray-100"
@@ -73,7 +73,7 @@ export default function Login() {
                 ) : (
                   <FaMoon className="text-black" />
                 )}
-              </button>
+              </button> */}
 
               {/* Language Switcher */}
               <div

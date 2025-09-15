@@ -41,6 +41,7 @@ const experienceSchema = new mongoose.Schema(
     company: String,
     startDate: String,
     endDate: String,
+    duration: String,
     description: [String], // bullet points
   },
   { _id: false }
@@ -49,7 +50,7 @@ const experienceSchema = new mongoose.Schema(
 const projectSchema = new mongoose.Schema(
   {
     title: String,
-    technologies: [String],
+    tech: [String],
     description: [String],
   },
   { _id: false }
@@ -59,6 +60,8 @@ const certificationSchema = new mongoose.Schema(
   {
     name: String,
     issuingOrganization: String,
+    org: String,
+    year: String,
     issueDate: String,
     expiryDate: String,
     credentialId: String,
